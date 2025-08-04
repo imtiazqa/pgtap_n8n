@@ -1,0 +1,181 @@
+{
+  "name": "pgTAP Test Agent",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        48,
+        -96
+      ],
+      "id": "e540963f-231c-4e0c-b93d-03322927b18f",
+      "name": "Manually Trigger"
+    },
+    {
+      "parameters": {
+        "command": "apk update\napk add docker-cli\n\n"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        208,
+        -64
+      ],
+      "id": "bef83f9d-7455-433d-b9c0-44b51b99fd52",
+      "name": "Install Docker CLI on n8n"
+    },
+    {
+      "parameters": {
+        "command": "docker run -d --rm --name pg-n8n -e POSTGRES_PASSWORD=secret -e POSTGRES_DB=mydb -p 5432:5432 postgres:17 \ndocker cp /home/node/.n8n/ddl_dml_tests.sql pg-n8n:/tmp/"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        384,
+        -64
+      ],
+      "id": "cf0cf096-0f05-471e-b520-5e8d1c4b2d9d",
+      "name": "Start PostgreSQL Container"
+    },
+    {
+      "parameters": {
+        "command": "docker exec pg-n8n bash -c \"\\\napt update && \\\napt install -y postgresql-17-pgtap\"\ndocker exec pg-n8n psql -U postgres -d mydb -c \"CREATE EXTENSION IF NOT EXISTS pgtap;\"\n"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        544,
+        -64
+      ],
+      "id": "2c59d8ff-7c0f-4e90-bbc7-d010ec352fa4",
+      "name": "Install and Configure pgTAP"
+    },
+    {
+      "parameters": {
+        "command": "docker exec -u postgres pg-n8n bash -c \"pg_prove -U postgres -d mydb --verbose /tmp/ddl_dml_tests.sql > /tmp/output.txt\"\n"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        720,
+        -64
+      ],
+      "id": "af298e7d-09d3-49bf-a686-110ce6ac6ac7",
+      "name": "Execute pgTAP Tests"
+    },
+    {
+      "parameters": {
+        "executeOnce": false,
+        "command": "docker exec pg-n8n cat /tmp/output.txt\n"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        896,
+        -64
+      ],
+      "id": "140e926e-feaf-4861-bae6-5274fe23ee8a",
+      "name": "Fetch Test Results",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $json.stdout || $json.result || $json.text || \"\";\nconst cleanResult = \"```\\n\" + raw + \"\\n```\";  // Triple backticks preserve line breaks\n\nreturn [{ cleanResult }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1088,
+        -64
+      ],
+      "id": "e65562d7-a9e5-44c4-8282-b02a20a35d28",
+      "name": "Format Results for Output"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Manually Trigger": {
+      "main": [
+        [
+          {
+            "node": "Install Docker CLI on n8n",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Install Docker CLI on n8n": {
+      "main": [
+        [
+          {
+            "node": "Start PostgreSQL Container",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Start PostgreSQL Container": {
+      "main": [
+        [
+          {
+            "node": "Install and Configure pgTAP",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Install and Configure pgTAP": {
+      "main": [
+        [
+          {
+            "node": "Execute pgTAP Tests",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute pgTAP Tests": {
+      "main": [
+        [
+          {
+            "node": "Fetch Test Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Test Results": {
+      "main": [
+        [
+          {
+            "node": "Format Results for Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Results for Output": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "a1bb30d7-4347-4a81-9690-90e24b8aa0d6",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "725ada552531e1eb2dbe9b3caa93ae9e6d9f3b85e345ec1dfa6c5e8892cae2d4"
+  },
+  "id": "3i9RpNXg5VGVbX6t",
+  "tags": []
+}
