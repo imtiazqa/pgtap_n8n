@@ -47,10 +47,6 @@ docker run -it --name n8n -u 0 \
 3.6 Fetch Results – Read test output from container
 3.7 Format Results – Clean and decorate the output
 
-**📸 Workflow Screenshot**
-
-<img width="1627" height="297" alt="image" src="https://github.com/user-attachments/assets/22b5872d-ea0d-4c89-b8fd-c0e910124478" />
-
 **📄 Sample Output**
 
 /tmp/ddl_dml_tests.sql ..
